@@ -1,15 +1,22 @@
 import { formatJSONResponse } from '@libs/api-gateway';
 import { middyfy } from '@libs/lambda';
+import { productsRepository } from 'src/repository';
 import { Product } from 'src/types';
+import Joi from 'joi';
+import { errorHandler } from 'src/app';
 
 const getProductById = async (event) => {
-  const { id } = event.pathParameters;
-  return formatJSONResponse<Product>({
-    id,
-    title: 'Product #1',
-    description: 'Description of #1 product',
-    price: 100,
+  console.log('getProductById Request: ', event.pathParameters);
+  const validationSchema = Joi.object({
+    id: Joi.string().required().min(5),
   });
+  try {
+    const { id } = await validationSchema.validateAsync(event.pathParameters);
+    const product = await productsRepository.getProductStockById(id);
+    return formatJSONResponse<Product>(product);
+  } catch (error) {
+    return errorHandler(error);
+  }
 };
 
 export const main = middyfy(getProductById);

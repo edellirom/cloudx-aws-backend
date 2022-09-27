@@ -14,8 +14,10 @@
     "@middy/http-json-body-parser": "^2.5.3",
     "aws-sdk": "^2.1220.0",
     "dotenv": "^16.0.2",
+    "joi": "^17.6.1",
     "pg": "^8.8.0",
-    "pg-hstore": "^2.3.4"
+    "pg-hstore": "^2.3.4",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@serverless/typescript": "^3.0.0",

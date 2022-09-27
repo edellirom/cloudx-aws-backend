@@ -3,6 +3,7 @@ import type { AWS } from '@serverless/typescript';
 import {
   getProductList,
   getProductById,
+  createProduct,
 } from '@functions/index';
 
 dotenv.config();
@@ -22,6 +23,8 @@ const serverlessConfiguration: AWS = {
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
+      PRODUCTS_TABLE_NAME: process.env.PRODUCTS_TABLE_NAME,
+      STOCKS_TABLE_NAME: process.env.STOCKS_TABLE_NAME,
     },
     httpApi: {
       cors: true,
@@ -30,6 +33,7 @@ const serverlessConfiguration: AWS = {
   functions: {
     getProductList,
     getProductById,
+    createProduct,
   },
   package: { individually: true },
   custom: {
