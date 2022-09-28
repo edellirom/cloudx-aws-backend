@@ -5,6 +5,7 @@ import {
   getProductById,
   createProduct,
   catalogBatchProcess,
+  removeProduct,
 } from '@functions/index';
 
 dotenv.config();
@@ -12,7 +13,11 @@ dotenv.config();
 const serverlessConfiguration: AWS = {
   service: 'products',
   frameworkVersion: '3',
-  plugins: ['serverless-esbuild', 'serverless-offline'],
+  plugins: [
+    'serverless-auto-swagger',
+    'serverless-esbuild',
+    'serverless-offline',
+  ],
   provider: {
     name: 'aws',
     runtime: 'nodejs14.x',
@@ -38,10 +43,32 @@ const serverlessConfiguration: AWS = {
           Ref: 'CreateProductTopic',
         },
       },
+      {
+        Effect: 'Allow',
+        Action: [
+          'dynamodb:Query',
+          'dynamodb:Scan',
+          'dynamodb:GetItem',
+          'dynamodb:PutItem',
+          'dynamodb:UpdateItem',
+          'dynamodb:DeleteItem',
+        ],
+        Resource: '*',
+      },
+      {
+        Effect: 'Allow',
+        Action: ['dynamodb:Query', 'dynamodb:Scan'],
+        Resource: '*',
+      },
     ],
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
+      DB_HOST: process.env.DB_HOST,
+      DB_NAME: process.env.DB_NAME,
+      DB_USER: process.env.DB_USER,
+      DB_PORT: process.env.DB_PORT,
+      DB_PASSWORD: process.env.DB_PASSWORD,
       PRODUCTS_TABLE_NAME: process.env.PRODUCTS_TABLE_NAME,
       STOCKS_TABLE_NAME: process.env.STOCKS_TABLE_NAME,
       SNS_CREATE_PRODUCT_SUBSCRIPTION_ENDPOINT:
@@ -59,6 +86,7 @@ const serverlessConfiguration: AWS = {
     getProductById,
     createProduct,
     catalogBatchProcess,
+    removeProduct,
   },
   package: { individually: true },
   custom: {
@@ -71,6 +99,11 @@ const serverlessConfiguration: AWS = {
       define: { 'require.resolve': undefined },
       platform: 'node',
       concurrency: 10,
+    },
+    autoswagger: {
+      title: 'Product Service',
+      apiType: 'http',
+      generateSwaggerOnDeploy: false,
     },
   },
   resources: {

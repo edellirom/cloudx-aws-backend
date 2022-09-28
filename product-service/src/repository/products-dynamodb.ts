@@ -1,5 +1,6 @@
-import { Product } from 'src/types';
 import AWS from 'aws-sdk';
+import { v4 as uuidv4 } from 'uuid';
+import { Product } from 'src/types';
 
 export class ProductsRepository {
   constructor(protected db: AWS.DynamoDB.DocumentClient) {}
@@ -69,6 +70,7 @@ export class ProductsRepository {
   }
 
   async saveProduct(item: Product): Promise<void> {
+    item.id = uuidv4();
     const params = {
       Item: item,
       TableName: process.env.PRODUCTS_TABLE_NAME,

@@ -1,5 +1,5 @@
 import AWS from 'aws-sdk';
-import { saveProduct } from '../../repository';
+import { productsRepository } from '../../repository';
 import { snsPublish } from './sns-publish';
 
 export const catalogBatchProcessService = async (records) => {
@@ -7,7 +7,7 @@ export const catalogBatchProcessService = async (records) => {
 
   await Promise.all(
     records.map(async ({ body }) => {
-      await saveProduct(JSON.parse(body));
+      await productsRepository.saveProduct(JSON.parse(body));
     })
   );
 

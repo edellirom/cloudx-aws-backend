@@ -1,1 +1,2 @@
-export * from './products-dynamodb';
+export * from './products-postgress';
+// export * from './products-dynamodb';
