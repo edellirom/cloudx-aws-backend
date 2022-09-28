@@ -29,11 +29,18 @@ const serverlessConfiguration: AWS = {
         Action: 's3:*',
         Resource: [`arn:aws:s3:::${s3BucketName}/*`],
       },
+      {
+        Effect: 'Allow',
+        Action: 'sqs:*',
+        Resource: ['arn:aws:sqs:eu-west-1:064446435005:catalog-items-queue'],
+      },
     ],
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
       S3_BUCKET_UPLOADS: process.env.S3_BUCKET_UPLOADS,
+      SQS_CATALOG_ITEMS_URL: process.env.SQS_CATALOG_ITEMS_URL,
+      AWS_BASIC_AUTHORIZER_ARN: process.env.AWS_BASIC_AUTHORIZER_ARN,
     },
   },
   // import the function via paths
