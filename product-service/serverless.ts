@@ -4,6 +4,7 @@ import {
   getProductList,
   getProductById,
   createProduct,
+  catalogBatchProcess,
 } from '@functions/index';
 
 dotenv.config();
@@ -20,11 +21,34 @@ const serverlessConfiguration: AWS = {
       minimumCompressionSize: 1024,
       shouldStartNameWithService: true,
     },
+    iamRoleStatements: [
+      {
+        Effect: 'Allow',
+        Action: 'sqs:*',
+        Resource: [
+          {
+            'Fn::GetAtt': ['CatalogItemsQueue', 'Arn'],
+          },
+        ],
+      },
+      {
+        Effect: 'Allow',
+        Action: 'sns:*',
+        Resource: {
+          Ref: 'CreateProductTopic',
+        },
+      },
+    ],
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
       PRODUCTS_TABLE_NAME: process.env.PRODUCTS_TABLE_NAME,
       STOCKS_TABLE_NAME: process.env.STOCKS_TABLE_NAME,
+      SNS_CREATE_PRODUCT_SUBSCRIPTION_ENDPOINT:
+        process.env.SNS_CREATE_PRODUCT_SUBSCRIPTION_ENDPOINT,
+      SNS_CREATE_PRODUCT_TOPIC_ARN: {
+        Ref: 'CreateProductTopic',
+      },
     },
     httpApi: {
       cors: true,
@@ -34,6 +58,7 @@ const serverlessConfiguration: AWS = {
     getProductList,
     getProductById,
     createProduct,
+    catalogBatchProcess,
   },
   package: { individually: true },
   custom: {
@@ -46,6 +71,32 @@ const serverlessConfiguration: AWS = {
       define: { 'require.resolve': undefined },
       platform: 'node',
       concurrency: 10,
+    },
+  },
+  resources: {
+    Resources: {
+      CatalogItemsQueue: {
+        Type: 'AWS::SQS::Queue',
+        Properties: {
+          QueueName: 'catalog-items-queue',
+        },
+      },
+      CreateProductTopic: {
+        Type: 'AWS::SNS::Topic',
+        Properties: {
+          TopicName: 'create-product-topic',
+        },
+      },
+      CreateProductSubscription: {
+        Type: 'AWS::SNS::Subscription',
+        Properties: {
+          Endpoint: `${process.env.SNS_CREATE_PRODUCT_SUBSCRIPTION_ENDPOINT}`,
+          Protocol: 'email',
+          TopicArn: {
+            Ref: 'CreateProductTopic',
+          },
+        },
+      },
     },
   },
 };
