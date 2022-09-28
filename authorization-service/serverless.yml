@@ -1,0 +1,27 @@
+service: authorization-service
+frameworkVersion: '3'
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: eu-west-1
+  stage: dev
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+functions:
+  basicAuthorizer:
+    handler: functions/authorizers/basicAuthorizer.handler
+  protectedFunction:
+    handler: functions/protectedFunction.handler
+    events:
+      - http:
+          path: /auth
+          method: get
+          authorizer:
+            name: basicAuthorizer
+            identitySource: method.request.header.Authorization
+            type: token
+            resultTtlInSeconds: 0
+#      - cognitoUserPool:
+#          pool: MyUserPool
+#          trigger: PreSignUp
