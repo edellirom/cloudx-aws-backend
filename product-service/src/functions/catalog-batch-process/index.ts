@@ -4,11 +4,15 @@ export const catalogBatchProcess = {
   handler: `${handlerPath(__dirname)}/handler.main`,
   events: [
     {
-      sqs: 'arn:aws:sqs:eu-west-1:064446435005:catalog-items-queue',
+      sqs: {
+        batchSize: 5,
+        arn: 'arn:aws:sqs:eu-west-1:064446435005:catalog-items-queue',
+      },
     },
   ],
 };
 
+//example with resource Fn::GetAtt
 // sqs: {
 //   batchSize: '2',
 //   arn: {
