@@ -6,7 +6,7 @@ export class ProductsRepository {
 
   async getProducts(): Promise<Product[]> {
     return <Promise<Product[]>>this.db.query(`
-      SELECT p.title, p.description, p.price, s.count
+      SELECT p.id, p.title, p.description, p.price, s.count
       FROM products p
       JOIN stocks s 
       ON s.product_id = p.id 
@@ -15,7 +15,7 @@ export class ProductsRepository {
 
   async getProductById(id: string): Promise<Product> {
     return <Promise<Product>>this.db.query(`
-      SELECT p.title, p.description, p.price, s.count
+      SELECT p.id, p.title, p.description, p.price, s.count
       FROM products p
       JOIN stocks s 
       ON s.product_id = p.id 
