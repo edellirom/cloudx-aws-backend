@@ -18,7 +18,7 @@ functions:
     events:
       - http:
           path: /auth
-          method: get
+          method: post
           authorizer:
             ## USE EXISTING CUSTOM ATHORIZER FROM RESOURCE
             type: CUSTOM
@@ -47,6 +47,15 @@ resources:
       Type: AWS::ApiGateway::RestApi
       Properties:
         Name: ${self:service}
+    BasicAuthorizerConfigLambdaPermission:
+      Type: "AWS::Lambda::Permission"
+      DependsOn:
+        - ApiGatewayRestApi
+        - BasicAuthorizerLambdaFunction
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref BasicAuthorizerLambdaFunction
+        Principal: apigateway.amazonaws.com
     GeneralCognitoUserPool:
       Type: AWS::Cognito::UserPool
       Properties: 
@@ -124,15 +133,24 @@ resources:
       Value:
         Ref: GeneralBasicAuthorizer
       Export:
-        Name: general-basic-authorizer-ref-${self:provider.stage}
+        Name: 
+          'Fn::Sub': '${AWS::StackName}-GeneralBasicAuthorizerRef'
+    GeneralBasicAuthorizerArn: 
+      Value:
+        Fn::GetAtt: BasicAuthorizerLambdaFunction.Arn
+      Export:
+        Name: 
+          'Fn::Sub': '${AWS::StackName}-GeneralBasicAuthorizerArn'
     GeneralCognitoAuthorizerRef:
       Value: 
         Ref: GeneralCognitoAuthorizer
       Export:
-        Name: general-cognito-authorizer-ref-${self:provider.stage}
+        Name: 
+          'Fn::Sub': '${AWS::StackName}-GeneralCognitoAuthorizerRef' 
     GeneralCognitoUserPoolArn: 
       Value: 
         Fn::GetAtt: GeneralCognitoUserPool.Arn
       Export: 
-        Name: general-cognito-user-pool-arn-${self:provider.stage} 
+        Name: 
+          'Fn::Sub': '${AWS::StackName}-GeneralCognitoUserPoolArn' 
         

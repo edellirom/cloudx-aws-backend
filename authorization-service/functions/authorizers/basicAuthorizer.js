@@ -2,7 +2,6 @@ exports.handler = async (event, context, callback) => {
   if(event['type'] != 'TOKEN'){
     return callback('Unauthorized');
   }
-
   try{
     const {authorizationToken, methodArn} = event;
     const encodedCridentials = authorizationToken.split(' ')[1];
@@ -12,11 +11,11 @@ exports.handler = async (event, context, callback) => {
     const principalId = (username) ? Buffer.from(username).toString('base64') : 'Access denied';
     const effect = (storedUserPassword && storedUserPassword === password) ? 'Allow' : 'Deny';
     const policy =  generatePolicy(principalId, methodArn, effect);
-    console.log(policy);
     return callback(null, policy);
   }
   catch(error){
-    return callback('Unauthorized',error.message);
+    console.log(error)
+    return callback('Unauthorized', error.message);
   }
 }
 
