@@ -8,6 +8,8 @@ provider:
 plugins:
   - serverless-offline
   - serverless-dotenv-plugin
+custom:
+  auth: 'test' 
 functions:
   basicAuthorizer:
     handler: functions/authorizers/basicAuthorizer.handler
@@ -16,12 +18,139 @@ functions:
     events:
       - http:
           path: /auth
-          method: get
+          method: post
           authorizer:
-            name: basicAuthorizer
-            identitySource: method.request.header.Authorization
-            type: token
-            resultTtlInSeconds: 0
-#      - cognitoUserPool:
-#          pool: MyUserPool
-#          trigger: PreSignUp
+            ## USE EXISTING CUSTOM ATHORIZER FROM RESOURCE
+            type: CUSTOM
+            authorizerId: !Ref GeneralBasicAuthorizer 
+            ## USE EXISTING COGNITO ATHORIZER FROM RESOURCE
+            # type: COGNITO_USER_POOLS
+            # authorizerId: !Ref GeneralCognitoAuthorizer
+            ## ARN BASIC AND COGNITO 
+            # arn: arn:aws:lambda:eu-west-1:064446435005:function:authorization-service-dev-basicAuthorizer
+            # arn: arn:aws:cognito-idp:eu-west-1:064446435005:userpool/eu-west-1_Cxks26GGm
+            ## CREATE AND USE COGNITO AUTHORIZER
+            # name: generalCognitoAuthorizer
+            # type: COGNITO_USER_POOLS
+            # arn:
+            #   Fn::GetAtt:
+            #     - GeneralCognitoUserPool
+            #     - Arn
+            ## CREATE AND USE BASIC AUTHORIZER
+            # name: basicAuthorizer
+            # identitySource: method.request.header.Authorization
+            # type: token
+            # resultTtlInSeconds: 0
+resources:
+  Resources: 
+    ApiGatewayRestApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: ${self:service}
+    BasicAuthorizerConfigLambdaPermission:
+      Type: "AWS::Lambda::Permission"
+      DependsOn:
+        - ApiGatewayRestApi
+        - BasicAuthorizerLambdaFunction
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref BasicAuthorizerLambdaFunction
+        Principal: apigateway.amazonaws.com
+    GeneralCognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties: 
+        UserPoolName: ${self:provider.stage}-general-user-pool
+        UsernameAttributes:
+          - email
+        AutoVerifiedAttributes:
+          - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 6
+            RequireLowercase: false
+            RequireNumbers: false
+            RequireSymbols: false
+            RequireUppercase: false
+    GeneralCognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties: 
+        ClientName: ${self:provider.stage}-general-user-pool-client
+        UserPoolId: 
+          Ref: GeneralCognitoUserPool
+        CallbackURLs: 
+          - 'http://localhost:3000'
+        AllowedOAuthFlows:
+          - code
+          - implicit
+        AllowedOAuthFlowsUserPoolClient: true
+        AllowedOAuthScopes:
+          - email
+          - openid
+          - phone
+          - profile
+          - 'aws.cognito.signin.user.admin'
+        ExplicitAuthFlows: 
+          - ADMIN_NO_SRP_AUTH
+        SupportedIdentityProviders:
+          - COGNITO
+          # - Google 
+          # - LoginWithAmazon
+        GenerateSecret: true
+    GeneralCognitoUserPoolDomain:
+      Type: AWS::Cognito::UserPoolDomain
+      Properties: 
+        Domain: ${self:provider.stage}-dellirom-user-pool
+        UserPoolId: 
+          Ref: GeneralCognitoUserPool
+    GeneralCognitoAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties: 
+        Name: generalCognitoAuthorizer
+        Type: COGNITO_USER_POOLS
+        ProviderARNs: 
+          - !GetAtt GeneralCognitoUserPool.Arn
+        RestApiId: !Ref ApiGatewayRestApi
+        IdentitySource: method.request.header.Authorization
+    GeneralBasicAuthorizer: 
+      Type: AWS::ApiGateway::Authorizer
+      Properties: 
+        Name: basicAuthorizer
+        Type: TOKEN
+        IdentitySource: method.request.header.Authorization
+        AuthorizerResultTtlInSeconds: 0
+        RestApiId: !Ref ApiGatewayRestApi
+        AuthorizerUri: !Join 
+          - ''
+          - - 'arn:aws:apigateway:'
+            - !Ref 'AWS::Region'
+            - ':lambda:path/2015-03-31/functions/'
+            - !GetAtt 
+              - BasicAuthorizerLambdaFunction
+              - Arn
+            - /invocations
+  Outputs:
+    GeneralBasicAuthorizerRef: 
+      Value:
+        Ref: GeneralBasicAuthorizer
+      Export:
+        Name: 
+          'Fn::Sub': '${AWS::StackName}-GeneralBasicAuthorizerRef'
+    GeneralBasicAuthorizerArn: 
+      Value:
+        Fn::GetAtt: BasicAuthorizerLambdaFunction.Arn
+      Export:
+        Name: 
+          'Fn::Sub': '${AWS::StackName}-GeneralBasicAuthorizerArn'
+    GeneralCognitoAuthorizerRef:
+      Value: 
+        Ref: GeneralCognitoAuthorizer
+      Export:
+        Name: 
+          'Fn::Sub': '${AWS::StackName}-GeneralCognitoAuthorizerRef' 
+    GeneralCognitoUserPoolArn: 
+      Value: 
+        Fn::GetAtt: GeneralCognitoUserPool.Arn
+      Export: 
+        Name: 
+          'Fn::Sub': '${AWS::StackName}-GeneralCognitoUserPoolArn' 
+        

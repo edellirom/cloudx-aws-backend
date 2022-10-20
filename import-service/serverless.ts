@@ -40,7 +40,11 @@ const serverlessConfiguration: AWS = {
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
       S3_BUCKET_UPLOADS: process.env.S3_BUCKET_UPLOADS,
       SQS_CATALOG_ITEMS_URL: process.env.SQS_CATALOG_ITEMS_URL,
-      AWS_BASIC_AUTHORIZER_ARN: process.env.AWS_BASIC_AUTHORIZER_ARN,
+      AWS_BASIC_AUTHORIZER_ARN: {
+        'Fn::ImportValue': {
+          'Fn::Sub': 'authorization-service-dev-GeneralBasicAuthorizerArn',
+        },
+      },
     },
   },
   // import the function via paths
