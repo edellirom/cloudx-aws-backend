@@ -12,7 +12,7 @@ const getProductById = async (event) => {
   });
   try {
     const { id } = await validationSchema.validateAsync(event.pathParameters);
-    const product = await productsRepository.getProductStockById(id);
+    const product = await productsRepository.getProductById(id);
     return formatJSONResponse<Product>(product);
   } catch (error) {
     return errorHandler(error);

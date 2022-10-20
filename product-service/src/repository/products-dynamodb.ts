@@ -4,42 +4,33 @@ import AWS from 'aws-sdk';
 export class ProductsRepository {
   constructor(protected db: AWS.DynamoDB.DocumentClient) {}
 
+  getProductTableName = (): AWS.DynamoDB.DocumentClient.ScanInput => ({
+    TableName: process.env.PRODUCTS_TABLE_NAME,
+  });
+
+  getStocksTableName = (): AWS.DynamoDB.DocumentClient.ScanInput => ({
+    TableName: process.env.STOCKS_TABLE_NAME,
+  });
+
   async getProducts(): Promise<Product[]> {
-    const result = await this.db
-      .scan({ TableName: process.env.PRODUCTS_TABLE_NAME })
-      .promise();
-    return result.Items as Product[];
-  }
+    const products = await this.db.scan(this.getProductTableName()).promise();
 
-  async getProductsStock(): Promise<Product[]> {
-    const params = {
-      RequestItems: {
-        products: {
-          Keys: [{ id: null }],
-        },
-        stocks: {
-          Keys: [{ product_id: null }],
-        },
-      },
-    };
-    const result = await db.batchGet(params).promise();
+    const stocks = await this.db.scan(this.getStocksTableName()).promise();
 
-    console.log(result.Responses.stocks);
-    console.log(result.Responses.products);
-    return [];
+    const stockByProductId = stocks.Items.reduce((acc, item) => {
+      const { product_id, count } = item;
+      return { ...acc, [product_id]: count };
+    }, {});
+
+    const productsItems = products.Items.map((item): unknown => {
+      const count = stockByProductId[item.id];
+      return { ...item, count };
+    });
+
+    return productsItems as Product[];
   }
 
   async getProductById(id: string): Promise<Product> {
-    const params = {
-      Key: {
-        id,
-      },
-      TableName: process.env.PRODUCTS_TABLE_NAME,
-    };
-    return (await this.db.get(params).promise()).Item as Product;
-  }
-
-  async getProductStockById(id: string): Promise<Product> {
     const params = {
       TransactItems: [
         {
@@ -60,12 +51,16 @@ export class ProductsRepository {
         },
       ],
     };
-    const responses = (await this.db.transactGet(params).promise()).Responses;
+    try {
+      const result = await this.db.transactGet(params).promise();
 
-    return responses.reduce(
-      (res, response) => (res = { ...res, ...response.Item }),
-      {}
-    ) as Product;
+      return result.Responses.reduce(
+        (res, response) => (res = { ...res, ...response.Item }),
+        {}
+      ) as Product;
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async saveProduct(item: Product): Promise<void> {
