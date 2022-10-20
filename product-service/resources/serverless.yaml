@@ -1,0 +1,40 @@
+service: database
+provider: 
+  name: aws
+  region: eu-west-1
+custom:
+  productsTableName: products
+  stocksTableName: stocks
+
+resources:
+  Resources:
+    ProductsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.productsTableName}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: title
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: title
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+    StocksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.stocksTableName}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: product_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: product_id
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
