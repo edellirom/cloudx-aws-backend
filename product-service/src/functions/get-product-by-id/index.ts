@@ -4,9 +4,10 @@ export const getProductById = {
   handler: `${handlerPath(__dirname)}/handler.main`,
   events: [
     {
-      httpApi: {
+      http: {
         method: 'get',
         path: '/products/{id}',
+        cors: true
       },
     },
   ],

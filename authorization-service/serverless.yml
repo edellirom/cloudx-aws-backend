@@ -21,11 +21,11 @@ functions:
           method: post
           authorizer:
             ## USE EXISTING CUSTOM ATHORIZER FROM RESOURCE
-            type: CUSTOM
-            authorizerId: !Ref GeneralBasicAuthorizer 
+            # type: CUSTOM
+            # authorizerId: !Ref GeneralBasicAuthorizer 
             ## USE EXISTING COGNITO ATHORIZER FROM RESOURCE
-            # type: COGNITO_USER_POOLS
-            # authorizerId: !Ref GeneralCognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref GeneralCognitoAuthorizer
             ## ARN BASIC AND COGNITO 
             # arn: arn:aws:lambda:eu-west-1:064446435005:function:authorization-service-dev-basicAuthorizer
             # arn: arn:aws:cognito-idp:eu-west-1:064446435005:userpool/eu-west-1_Cxks26GGm
